@@ -167,17 +167,19 @@ Agents share Symbols over SEP. They do not ship raw sensor frames.
 
 Because a swarm of edge agents needs a wire format that works in
 packet-loss regimes LoRa and ESP-NOW introduce, with no central
-coordinator and no cloud. SEP is 24 B of signed payload, 8 B of MAC,
-hop-limited, deduplicated, and anti-replay windowed (ADR-0011 through
-ADR-0012). One frame carries one sign.
+coordinator and no cloud. SEP is a 24 B inner frame carrying one sign,
+integrity-checked with CRC-16/CCITT, wrapped in a 32 B authenticated
+envelope (that frame plus an 8 B BLAKE3-keyed MAC under a pre-shared
+key), hop-limited, deduplicated, and anti-replay windowed (ADR-0011
+through ADR-0012). One frame carries one sign.
 
 ## What it is
 
 - **An intelligence layer for physical agents.** Runs on the silicon
   they already carry. Produces structured meaning; exposes it to
   higher-level planners or LLM agents over a typed API.
-- **A mesh protocol.** Agents gossip signs peer-to-peer. Partitions
-  heal without loss.
+- **A mesh protocol.** Agents gossip signs peer-to-peer. A partition
+  reconverges by re-gossip once it rejoins.
 - **A measurement discipline.** Every performance claim maps to a rig
   in [`docs/performance.md`](docs/performance.md) that runs in the
   verify gate (or is marked `P8-awaiting-hardware`).
