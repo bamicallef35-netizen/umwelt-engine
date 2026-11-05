@@ -1,0 +1,48 @@
+# Maturin build config for `umwelt-pyo3` (P7.2).
+#
+# Run from this directory (or pass `--manifest-path`):
+#
+#     maturin develop                # build + install in active venv
+#     maturin build --release        # produce a wheel under target/wheels/
+#
+# The `extension-module` Cargo feature is the load-bearing bit — it
+# tells PyO3 not to link against libpython, which is required for the
+# .so to be loaded by CPython at import time. See
+# `crates/umwelt-pyo3/Cargo.toml` for the feature definition and
+# `scripts/pyo3_smoke.py` for a post-install sanity check.
+
+[build-system]
+requires      = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name            = "umwelt"
+version         = "0.1.0"
+description     = "Umwelt Engine — on-device semiotic runtime (PyO3 bindings)."
+readme          = "README.md"
+requires-python = ">=3.8"
+license         = { text = "Apache-2.0" }
+authors         = [{ name = "Fern & Circuit Labs" }]
+classifiers     = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.urls]
+Repository    = "https://github.com/fernandcircuit/fern-circuit-labs"
+Documentation = "https://github.com/fernandcircuit/fern-circuit-labs/blob/main/README.md"
+
+[tool.maturin]
+# Build as a Python extension module. PyO3 strips the libpython link
+# so CPython can dlopen() the resulting `umwelt.*.so`.
+features    = ["extension-module"]
+# The Rust crate's `[lib].name` is already `umwelt`, so the resulting
+# importable module is `import umwelt`. No pure-Python source tree.
+module-name = "umwelt"
+# Build from the workspace so umwelt-core's path dependency resolves.
+manifest-path = "Cargo.toml"

@@ -1,0 +1,36 @@
+[package]
+name        = "umwelt-cli"
+version     = { workspace = true }
+edition     = { workspace = true }
+rust-version = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+homepage    = { workspace = true }
+readme      = { workspace = true }
+description = "Umwelt Engine CLI — boot an agent, inspect its graph, replay logs."
+documentation = "https://docs.rs/umwelt-cli"
+keywords    = ["semiotics", "umwelt", "cli", "iot", "runtime"]
+categories  = ["command-line-utilities"]
+
+[[bin]]
+name = "umwelt"
+path = "src/main.rs"
+
+[dependencies]
+umwelt-core      = { path = "../umwelt-core", features = ["serde"] }
+umwelt-sep       = { path = "../umwelt-sep" }
+umwelt-drivers   = { path = "../umwelt-drivers" }
+umwelt-transport = { path = "../umwelt-transport" }
+umwelt-vocab     = { path = "../umwelt-vocab" }
+clap             = { workspace = true }
+tokio            = { workspace = true }
+tracing          = { workspace = true }
+tracing-subscriber = { workspace = true }
+# Config loading (P5.5): YAML parse + validation. Mirrors the
+# umwelt-vocab loader stack so there's one shared toolchain for all
+# host-side config ingestion.
+serde            = { workspace = true }
+serde_yaml_ng    = { workspace = true }
+serde_json       = { workspace = true }
+thiserror        = { workspace = true }

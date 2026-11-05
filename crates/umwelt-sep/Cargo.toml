@@ -1,0 +1,32 @@
+[package]
+name        = "umwelt-sep"
+version     = { workspace = true }
+edition     = { workspace = true }
+rust-version = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+homepage    = { workspace = true }
+readme      = { workspace = true }
+description = "Sign Exchange Protocol — peer-to-peer sign propagation. no_std."
+documentation = "https://docs.rs/umwelt-sep"
+keywords    = ["semiotics", "no-std", "protocol", "mesh", "iot"]
+categories  = ["embedded", "no-std::no-alloc", "network-programming"]
+
+# docs.rs: render with all features so the full API surface (std feature)
+# is visible. See umwelt-core/Cargo.toml for rationale.
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["std"]
+std     = ["umwelt-core/std"]
+
+[dependencies]
+umwelt-core = { path = "../umwelt-core", default-features = false }
+heapless    = { workspace = true }
+bitflags    = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

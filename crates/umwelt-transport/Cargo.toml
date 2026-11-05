@@ -1,0 +1,41 @@
+[package]
+name        = "umwelt-transport"
+version     = { workspace = true }
+edition     = { workspace = true }
+rust-version = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+homepage    = { workspace = true }
+readme      = { workspace = true }
+description = "Transport adapters for SEP — LoRa, UDP, in-memory. Host-only by default."
+documentation = "https://docs.rs/umwelt-transport"
+keywords    = ["semiotics", "transport", "udp", "lora", "mesh"]
+categories  = ["network-programming", "simulation"]
+
+[features]
+# Loopback is on by default from P4.4 onward: the N-agent mesh is the
+# in-process fabric used by swarm tests, and without it the workspace
+# `cargo test` gate would skip the P4.1 mesh suite and the P4.4 swarm
+# integration. Runtime cost is zero — `mesh`/`loopback` modules drop
+# out of production builds that disable the feature.
+default  = ["udp", "sim-lora", "loopback"]
+udp      = []
+loopback = []
+# P4.3 — Simulated-LoRa wrapper. Pure-std, test-only fault injector
+# layered over any `SepTransport`. No external transitive deps; stays
+# `#![deny(unsafe_code)]`.
+sim-lora = []
+
+[dependencies]
+umwelt-sep  = { path = "../umwelt-sep" }
+umwelt-core = { path = "../umwelt-core" }
+tokio       = { workspace = true }
+bytes       = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+# Used by the loopback transport (P0.5.12) for its bounded frame queue.
+heapless    = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

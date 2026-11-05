@@ -1,0 +1,54 @@
+[package]
+name        = "umwelt-core"
+version     = { workspace = true }
+edition     = { workspace = true }
+rust-version = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+homepage    = { workspace = true }
+readme      = { workspace = true }
+description = "Core types and runtime for the Umwelt Engine. no_std compatible."
+documentation = "https://docs.rs/umwelt-core"
+keywords    = ["semiotics", "no-std", "cortex-m", "embedded", "runtime"]
+categories  = ["embedded", "no-std::no-alloc", "data-structures"]
+
+# docs.rs: render with all features so the full API surface (serde + std)
+# is visible. all-features = true is preferred over default-target =
+# "thumbv7em-none-eabihf" because docs.rs builders handle host targets
+# reliably and engineers browsing docs want the complete picture.
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[features]
+default = ["std"]
+# `std` pulls in `tracing` so the graph allocator can emit the ADR-0014
+# "log once per process" warn on the first SignId collision. no_std
+# targets see the COLLISION_COUNT atomic counter but no log output.
+std     = ["dep:tracing"]
+# Opt-in serde support. Kept no_std-compatible via serde's own
+# `default-features = false` — add `"std"` here only when enabling
+# features that require alloc/std at the consumer layer.
+serde = ["dep:serde"]
+
+[dependencies]
+heapless = { workspace = true }
+bitflags = { workspace = true }
+libm     = { workspace = true }
+# Optional — gated behind the `serde` feature. Uses no_std-safe
+# derive-only build of serde (no alloc, no std).
+serde = { version = "1", default-features = false, features = ["derive"], optional = true }
+# Optional — gated behind `std`. Only the graph allocator uses this
+# (ADR-0014 log-once collision warn); the rest of the crate is silent.
+tracing = { workspace = true, optional = true }
+
+[dev-dependencies]
+proptest  = { workspace = true }
+criterion = { workspace = true }
+
+# Criterion bench target for the SignId hash path (ADR-0014, P1.2).
+# Host-only — host tooling is `std`, matches `default-features`.
+[[bench]]
+name    = "hash"
+harness = false

@@ -1,0 +1,42 @@
+# cargo-fuzz harness for umwelt-sep (P2.6).
+#
+# Opt-in, nightly-only. This crate is *not* a member of the parent
+# workspace — the empty `[workspace]` table below prevents the pinned-
+# stable toolchain from ever building it via `cargo check --workspace`,
+# `scripts/verify.sh`, or CI. Run the fuzzer with:
+#
+#   rustup install nightly       # once
+#   cargo install cargo-fuzz     # once
+#   cd crates/umwelt-sep
+#   cargo +nightly fuzz run decode_never_panics
+#
+# See `fuzz_targets/decode_never_panics.rs` (phase P2.6).
+
+[package]
+name = "umwelt-sep-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+
+[dependencies.umwelt-sep]
+path = ".."
+
+# Empty workspace table: isolate from the parent workspace so the
+# pinned-stable toolchain does not try to build this crate.
+[workspace]
+
+[[bin]]
+name = "decode_never_panics"
+path = "fuzz_targets/decode_never_panics.rs"
+test = false
+doc = false
+bench = false
+
+[profile.release]
+debug = 1

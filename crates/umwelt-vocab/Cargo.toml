@@ -1,0 +1,22 @@
+[package]
+name = "umwelt-vocab"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme.workspace = true
+description = "YAML-based sign vocabulary loader for the Umwelt Engine"
+documentation = "https://docs.rs/umwelt-vocab"
+keywords    = ["semiotics", "vocabulary", "yaml", "ontology", "signs"]
+categories  = ["data-structures", "config"]
+
+[dependencies]
+serde         = { workspace = true }
+serde_yaml_ng = { workspace = true }
+thiserror     = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

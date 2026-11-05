@@ -1,0 +1,7 @@
+# cargo-fuzz artifacts — corpus grows as the fuzzer runs; crashes
+# land in artifacts/. Keep the source but not the campaign state.
+target/
+corpus/
+artifacts/
+coverage/
+Cargo.lock
