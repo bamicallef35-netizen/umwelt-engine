@@ -29,8 +29,8 @@ const pad = 48, labelW = 40, laneH = 64, lanes = 4, pxPerS = 40, gw = (span / 1e
 const W = gw + pad * 2 + labelW, H = gh + pad * 2 + 30 + block, x0 = pad + labelW;
 const X = (t) => x0 + ((t - t0) / span) * gw, Y = (lane, q) => pad + laneH * (lane + 0.5) - (q / 32767) * laneH * 0.42, yc = (lane) => pad + laneH * (lane + 0.5);
 let body = `<rect x="${x0 + 0.5}" y="${pad + 0.5}" width="${gw.toFixed(1)}" height="${gh}" fill="none" stroke="${RULE}"/>`;
-body += text(pad, pad - 14, "replay / the Hyde Park terrain trace through umwelt-core, compiled to WebAssembly", 10, INK2);
-body += text(x0 + gw, pad - 14, "benmicallef / umwelt-engine / drawn by the module's own emissions", 10, INK2, "end");
+body += text(pad, pad - 14, "replay / the Hyde Park terrain trace through umwelt-core as WebAssembly", 10, INK2);
+body += text(x0 + gw, pad - 14, "benmicallef / umwelt-engine", 10, INK2, "end");
 series.forEach((s, l) => {
   body += text(pad, yc(l) + 3, "ch" + l, 9, INK2);
   body += `<line x1="${x0}" y1="${yc(l)}" x2="${(x0 + gw).toFixed(1)}" y2="${yc(l)}" stroke="${RULE}"/>`;
@@ -44,7 +44,7 @@ for (const e of events) {
   else {
     const y = pad + laneH * ((e.a + e.b) / 2 + 0.5), key = e.a + "·" + e.b;
     body += `<rect x="${(Number(x) - 4).toFixed(1)}" y="${y - 4}" width="8" height="8" fill="${ACCENT}"/>`;
-    if (!(key in labelled) || e.t - labelled[key] > 500000) { labelled[key] = e.t; body += text(Number(x) + 7, y - 7, "symbol " + key, 9, INK); }
+    if (!(key in labelled)) { labelled[key] = e.t; body += text(Number(x) + 7, y - 7, "symbol " + key, 9, INK); }   // one label per pair, at its first symbol
   }
 }
 const sbY = pad + gh + 22;
