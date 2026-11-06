@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>umwelt-engine, live / Benjamin Micallef</title>
+<meta name="description" content="The Umwelt Engine's no_std core compiled to WebAssembly, unchanged, condensing a sensor trace, or your pointer, into Peirce's icons, indices and symbols in the browser.">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main>
+  <header class="site">
+    <h1>umwelt-engine, live</h1>
+    <p class="meta">the no_std core compiled to WebAssembly, unchanged, 22 KB / raw samples → icons → indices → symbols / replaying the Hyde Park terrain trace, or reading your pointer / <a href="https://github.com/benmicallef/umwelt-engine">source</a> / <a href="https://benmicallef.github.io/">benmicallef</a></p>
+  </header>
+
+  <figure class="demo">
+    <div class="stage" id="stage" style="aspect-ratio: 16 / 7;">
+      <canvas id="c" aria-label="four sensor channels and the signs the engine forms from them"></canvas>
+    </div>
+    <div class="controls">
+      <div class="group" id="source">
+        <span class="lbl">source</span>
+        <button data-s="trace" aria-pressed="true">terrain trace</button>
+        <button data-s="pointer" aria-pressed="false">your pointer</button>
+      </div>
+      <div class="group">
+        <span class="lbl">speed</span>
+        <input type="range" id="speed" min="1" max="16" step="1" value="2" aria-label="replay speed, times real time">
+      </div>
+      <div class="group">
+        <button id="reset" aria-pressed="false">reset</button>
+      </div>
+    </div>
+    <div class="readout" id="readout">
+      <span class="k">samples</span> <span id="n">0</span>
+      &nbsp; <span class="k">icons</span> <span id="icons">0</span>
+      &nbsp; <span class="k">indices</span> <span id="indices">0</span>
+      &nbsp; <span class="k">symbols</span> <span id="symbols">0</span>
+      &nbsp; <span class="k">channels registered</span> <span id="occ">0</span> <span class="k">of 4</span>
+      &nbsp; <span class="k">module</span> <span id="status">loading</span>
+    </div>
+    <pre class="readout" id="ledger" aria-label="the last emissions"></pre>
+    <figcaption>four channels, scrolling. a dot on a lane is an icon: a sensation on one channel that passed the activity gate. a blue tie between two lanes is an index: two icons close enough in time, with the coherence of the pair. a filled square is a symbol: a pair whose indices have recurred enough to enter the agent's vocabulary. nothing is drawn that the module did not emit. with your pointer, the four channels are its x and y velocity and position: hold still and the signs stop forming.</figcaption>
+  </figure>
+
+  <section class="text">
+    <p>This page runs <code>umwelt-core</code>, the runtime's <code>no_std</code> crate, compiled to WebAssembly with no changes and no bindings generator: a single-file wrapper exposes <code>init</code>, <code>observe</code> and a flat event buffer, and this page calls them once per sample. The pipeline is the one the Hyde Park replay example drives, at the same small profile — four channels, a 64-sample icon window, eight histogram bins. Replaying the example's checked-in trace here produces the example's counts exactly: 18 icons, 23 indices, 7 symbols, in the same order. <code>node web/check.js</code> in the repository re-runs that comparison.</p>
+    <h2>what this shows, and what it does not</h2>
+    <p>It shows the core's semiogenesis path running outside the Rust toolchain, on a stream, with its events legible as they form. It is not the on-target hardware validation the README lists as pending; a browser is not a Cortex-M4F. Symbols here are shown as the channel pair and coherence the event carries; naming them with a vocabulary is the job of the layers above the core, which this page does not load.</p>
+    <p class="meta">apache-2.0 / <a href="https://github.com/benmicallef/umwelt-engine/tree/main/web">the wrapper crate</a> / <a href="https://github.com/benmicallef/umwelt-engine">README</a></p>
+  </section>
+</main>
+
+<script type="module">
+const cv = document.getElementById("c"), ctx = cv.getContext("2d"), stage = document.getElementById("stage");
+const css = getComputedStyle(document.documentElement);
+const INK = css.getPropertyValue("--ink").trim(), INK2 = css.getPropertyValue("--ink-2").trim(), RULE = css.getPropertyValue("--rule").trim(), ACCENT = css.getPropertyValue("--accent").trim();
+const dpr = Math.max(1, Math.min(3, window.devicePixelRatio || 1));
+const ui = Object.fromEntries(["n", "icons", "indices", "symbols", "occ", "status", "ledger"].map((k) => [k, document.getElementById(k)]));
+const LANES = 4, WINDOW_US = 6e6, Q = 32767;
+let w = null, trace = [], cursor = 0, source = "trace", speed = 2, counts = [0, 0, 0], samples = 0;
+let series = [[], [], [], []], events = [], ledger = [], tNow = 0, lastPtr = null;
+
+async function load() {
+  const bytes = await (await fetch("./umwelt.wasm")).arrayBuffer();   // plain fetch: no MIME-type dependence
+  const { instance } = await WebAssembly.instantiate(bytes);
+  w = instance.exports;
+  const text = await (await fetch("./terrain_trace.ndjson")).text();
+  const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines[0] !== "umwelt.sensor_log.v1") throw new Error("log header mismatch");
+  trace = lines.slice(1).map((l) => JSON.parse(l));
+  ui.status.textContent = `umwelt.wasm, ${bytes.byteLength.toLocaleString("en-GB")} bytes, ${trace.length} samples in the trace`;
+  reset();
+}
+function reset() {
+  if (!w) return;
+  w.init(); cursor = 0; counts = [0, 0, 0]; samples = 0; series = [[], [], [], []]; events = []; ledger = []; tNow = 0; tracePos = 0; pauseUntil = 0; lastPtr = null;
+}
+function feed(channel, q15, tUs) {
+  const r = w.observe(channel, q15, tUs % 4294967296, Math.floor(tUs / 4294967296));
+  if (r === 0xffffffff) return;
+  samples++; tNow = tUs;
+  series[channel].push([tUs, q15]);
+  const n = w.events_len(), v = new Uint32Array(w.memory.buffer, w.events_ptr(), n * 8);
+  for (let i = 0; i < n; i++) {
+    const e = { kind: v[i * 8], a: v[i * 8 + 1], b: v[i * 8 + 2], t: v[i * 8 + 3] + v[i * 8 + 4] * 4294967296, q: v[i * 8 + 5] / Q, x: v[i * 8 + 6] };
+    counts[e.kind]++; events.push(e);
+    const label = e.kind === 0 ? `icon    ch${e.a}       entropy ${e.q.toFixed(2)}  magnitude ${(e.x / Q).toFixed(2)}`
+      : e.kind === 1 ? `index   ch${e.a}–ch${e.b}   coherence ${e.q.toFixed(2)}  Δ ${(e.x / 1000).toFixed(0)} ms`
+      : `symbol  ch${e.a}–ch${e.b}   coherence ${e.q.toFixed(2)}`;
+    ledger.push(`${String(Math.round(e.t / 1000)).padStart(7)} ms  ${label}`); if (ledger.length > 7) ledger.shift();
+  }
+  w.events_clear();
+  const cut = tUs - WINDOW_US;
+  for (const s of series) while (s.length && s[0][0] < cut) s.shift();
+  while (events.length && events[0].t < cut) events.shift();
+}
+// Trace mode advances in trace time: `speed` × real time, so a throttled
+// frame rate changes nothing but the smoothness.
+let tracePos = 0, lastFrameMs = 0, pauseUntil = 0;
+function stepTrace(nowMs) {
+  const dt = lastFrameMs ? Math.min(250, nowMs - lastFrameMs) : 0; lastFrameMs = nowMs;
+  if (nowMs < pauseUntil) return;
+  tracePos += dt * 1000 * speed;
+  while (cursor < trace.length && trace[cursor].tick_us <= tracePos) { const s = trace[cursor++]; feed(s.channel, s.q15, s.tick_us); }
+  tNow = Math.max(tNow, tracePos);
+  if (cursor >= trace.length) { pauseUntil = nowMs + 1500; w.init(); cursor = 0; counts = [0, 0, 0]; samples = 0; series = [[], [], [], []]; events = []; tracePos = 0; tNow = 0; }
+}
+// Pointer mode samples on each pointer event, at most once per 16 ms: the
+// four channels are the pointer's x and y velocity and position.
+let lastSampleMs = 0;
+function samplePointer(e, nowMs = performance.now()) {
+  if (nowMs - lastSampleMs < 16) return; lastSampleMs = nowMs;
+  const r = stage.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width * 2 - 1, y = (e.clientY - r.top) / r.height * 2 - 1;
+  const vx = lastPtr ? (x - lastPtr.x) * 8 : 0, vy = lastPtr ? (y - lastPtr.y) * 8 : 0;
+  lastPtr = { x, y };
+  const t = Math.round(nowMs * 1000), q = (f) => Math.max(-Q, Math.min(Q, Math.round(f * Q)));
+  feed(0, q(vx), t); feed(1, q(vy), t + 1); feed(2, q(x), t + 2); feed(3, q(y), t + 3);
+}
+function fit() { const r = stage.getBoundingClientRect(); cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
+function draw() {
+  const r = stage.getBoundingClientRect(), W = r.width, H = r.height, padL = 44, padR = 12, laneH = (H - 16) / LANES;
+  ctx.clearRect(0, 0, W, H);
+  const X = (t) => padL + (W - padL - padR) * (1 - (tNow - t) / WINDOW_US), Y = (lane, q) => 8 + laneH * (lane + 0.5) - (q / Q) * laneH * 0.42;
+  ctx.font = "10px IBM Plex Mono, ui-monospace, monospace"; ctx.textBaseline = "middle";
+  for (let l = 0; l < LANES; l++) {
+    const yc = 8 + laneH * (l + 0.5);
+    ctx.strokeStyle = RULE; ctx.beginPath(); ctx.moveTo(padL, yc); ctx.lineTo(W - padR, yc); ctx.stroke();
+    ctx.fillStyle = INK2; ctx.fillText(source === "pointer" ? ["vx", "vy", "x", "y"][l] : "ch" + l, 8, yc);
+    const s = series[l]; if (s.length < 2) continue;
+    ctx.strokeStyle = INK; ctx.lineWidth = 1; ctx.beginPath();
+    s.forEach(([t, q], i) => { const x = X(t), y = Y(l, q); if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); });
+    ctx.stroke();
+  }
+  const labelled = {};
+  for (const e of events) {
+    const x = X(e.t);
+    if (e.kind === 0) { ctx.fillStyle = INK; ctx.beginPath(); ctx.arc(x, 8 + laneH * (e.a + 0.5), 3.2, 0, 7); ctx.fill(); }
+    else if (e.kind === 1) { const y0 = 8 + laneH * (e.a + 0.5), y1 = 8 + laneH * (e.b + 0.5); ctx.strokeStyle = ACCENT; ctx.lineWidth = 1 + e.q * 1.5; ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke(); ctx.lineWidth = 1; }
+    else {
+      const y = 8 + laneH * ((e.a + e.b) / 2 + 0.5); ctx.fillStyle = ACCENT; ctx.fillRect(x - 4, y - 4, 8, 8);
+      // one label per pair per half-second, so simultaneous symbols don't overprint
+      const key = e.a + "·" + e.b;
+      if (!(key in labelled) || e.t - labelled[key] > 500000) { labelled[key] = e.t; ctx.fillStyle = INK; ctx.fillText(`symbol ${key}`, x + 7, y - 9); }
+    }
+  }
+  ctx.fillStyle = INK2; ctx.fillText(`${(WINDOW_US / 1e6).toFixed(0)} s window`, W - padR - 70, H - 6);
+}
+function readout() {
+  ui.n.textContent = samples; ui.icons.textContent = counts[0]; ui.indices.textContent = counts[1]; ui.symbols.textContent = counts[2];
+  ui.occ.textContent = w ? w.occupied() : 0; ui.ledger.textContent = ledger.join("\n") || "no emissions yet";
+}
+function frame(nowMs) {
+  try {
+    if (w) {
+      if (source === "trace") stepTrace(nowMs); else tNow = Math.max(tNow, Math.round(performance.now() * 1000));
+      draw(); readout();
+    }
+  } catch (err) { ui.status.textContent = "error: " + err.message; throw err; }
+  requestAnimationFrame(frame);
+}
+// A handle for tests and for driving the page where animation frames are
+// starved: advance the trace by `ms` of trace time, feed one pointer
+// position at a given clock, or redraw.
+window.__umwelt = () => ({
+  samples, cursor, counts, tNow, events: events.length, source, speed, tracePos,
+  advance(ms) {   // in steps the per-frame clamp allows
+    if (!w) return; let t = lastFrameMs || performance.now();
+    for (let done = 0; done < ms; done += 200) { t += 200 / speed; stepTrace(t); }
+    draw(); readout();
+  },
+  sample(x, y, tMs) { if (!w) return; samplePointer({ clientX: x, clientY: y }, tMs); tNow = Math.max(tNow, Math.round(tMs * 1000)); },
+  redraw() { draw(); readout(); },
+});
+document.getElementById("source").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  source = b.dataset.s; e.currentTarget.querySelectorAll("button").forEach((c) => c.setAttribute("aria-pressed", String(c === b))); reset();
+});
+document.getElementById("speed").addEventListener("input", (e) => { speed = parseInt(e.target.value); });
+document.getElementById("reset").addEventListener("click", reset);
+stage.addEventListener("pointermove", (e) => { if (w && source === "pointer") samplePointer(e); });
+stage.addEventListener("pointerleave", () => { lastPtr = null; });
+window.addEventListener("resize", fit);
+fit(); requestAnimationFrame(frame);
+load().catch((err) => { ui.status.textContent = "failed: " + err.message; });
+</script>
+</body>
+</html>

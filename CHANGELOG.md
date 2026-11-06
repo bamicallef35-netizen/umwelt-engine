@@ -8,7 +8,12 @@ entry is tagged with the phase it shipped in; ADR numbers reference
 
 ## [Unreleased]
 
-_Nothing yet. Post-v0.1 work lands here._
+### Added
+- `web/`: the `no_std` core as a WebAssembly `cdylib` (its own workspace,
+  no wasm-bindgen), and `docs/index.html`, a live page that replays the
+  Hyde Park trace, or the viewer's pointer, through it and draws every
+  emission. `web/check.js` confirms the module reproduces the Rust
+  example's counts (18 icons, 23 indices, 7 symbols).
 
 ## [0.1.0] — 2026-04-20
 

@@ -1,5 +1,7 @@
 [workspace]
 resolver = "2"
+# The WebAssembly wrapper for the live page is its own workspace (see web/Cargo.toml).
+exclude = ["web"]
 members = [
     "crates/umwelt-core",
     "crates/umwelt-sep",

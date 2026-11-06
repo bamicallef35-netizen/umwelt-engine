@@ -5,6 +5,8 @@
 
 **An on-device semiotic runtime for physical agents.**
 
+**[▶ Live](https://benmicallef.github.io/umwelt-engine/)** — the `no_std` core compiled to WebAssembly, unchanged, condensing a sensor trace, or your pointer, into icons, indices and symbols in the browser.
+
 Umwelt Engine turns raw sensor streams into structured *signs* — Peirce's
 triadic chain of **Icon → Index → Symbol** — and exchanges them with
 peers over a partition-tolerant mesh. Written in Rust, `no_std` at the
@@ -38,6 +40,7 @@ GPS or a network link.
 | Authentication | BLAKE3-keyed MAC-64, pre-shared key (ADR-0012) |
 | Python | PyO3 0.22 `abi3-py38` bindings — `pip install maturin && maturin develop` |
 | Metrics | Live `/metrics` endpoint, Prometheus text format |
+| Browser | the core as a 22 KB WebAssembly module, no bindings generator — [live page](https://benmicallef.github.io/umwelt-engine/), [`web/`](web/) |
 | Status | v0.1.0 released; on-target hardware validation pending |
 
 ## 30-second quickstart
@@ -217,6 +220,18 @@ docs/
   performance.md          Every perf claim, every rig, every tolerance
   embedded_hal_compat.md  Embassy / embedded-hal compatibility audit
 ```
+
+## In the browser
+
+[`web/`](web/) is a single-file `cdylib` crate, kept outside the workspace,
+that wraps one `SemioticPipeline<4, 64, 8>` in four C-ABI exports and a
+flat event buffer. `cargo build --manifest-path web/Cargo.toml --target
+wasm32-unknown-unknown --release` produces a 22 KB module; the page in
+[`docs/`](docs/) loads it directly, with no wasm-bindgen and no
+JavaScript reimplementation of anything. `node web/check.js` replays
+the Hyde Park trace through the module and prints the same counts the
+Rust example prints — 18 icons, 23 indices, 7 symbols, the same first
+five emissions — which is the check that the two builds agree.
 
 ## Live metrics
 
