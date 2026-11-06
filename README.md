@@ -232,6 +232,9 @@ JavaScript reimplementation of anything. `node web/check.js` replays
 the Hyde Park trace through the module and prints the same counts the
 Rust example prints — 18 icons, 23 indices, 7 symbols, the same first
 five emissions — which is the check that the two builds agree.
+`node web/sheet.js` draws that replay from the module's own emissions:
+
+![The Hyde Park replay drawn from the module's emissions: icons on four channel lanes, indices as ties between lanes, symbols as squares](docs/replay.svg)
 
 ## Live metrics
 

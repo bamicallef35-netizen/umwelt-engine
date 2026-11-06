@@ -13,7 +13,8 @@ entry is tagged with the phase it shipped in; ADR numbers reference
   no wasm-bindgen), and `docs/index.html`, a live page that replays the
   Hyde Park trace, or the viewer's pointer, through it and draws every
   emission. `web/check.js` confirms the module reproduces the Rust
-  example's counts (18 icons, 23 indices, 7 symbols).
+  example's counts (18 icons, 23 indices, 7 symbols); `web/sheet.js`
+  draws the replay as `docs/replay.svg`.
 
 ## [0.1.0] — 2026-04-20
 
