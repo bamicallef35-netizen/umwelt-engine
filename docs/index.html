@@ -45,8 +45,8 @@
   </figure>
 
   <section class="text">
-    <p>This page runs <code>umwelt-core</code>, the runtime's <code>no_std</code> crate, compiled to WebAssembly with no changes and no bindings generator: a single-file wrapper exposes <code>init</code>, <code>observe</code> and a flat event buffer, and this page calls them once per sample. The pipeline is the one the Hyde Park replay example drives, at the same small profile — four channels, a 64-sample icon window, eight histogram bins. Replaying the example's checked-in trace here produces the example's counts exactly: 18 icons, 23 indices, 7 symbols, in the same order. <code>node web/check.js</code> in the repository re-runs that comparison.</p>
-    <h2>what this shows, and what it does not</h2>
+    <p>This page runs <code>umwelt-core</code>, the runtime's <code>no_std</code> crate, compiled to WebAssembly with no changes and no bindings generator: a single-file wrapper exposes <code>init</code>, <code>observe</code> and a flat event buffer, and this page calls them once per sample. The pipeline is the one the Hyde Park replay example drives, at the same small profile: four channels, a 64-sample icon window, eight histogram bins. Replaying the example's checked-in trace here produces the example's counts exactly: 18 icons, 23 indices, 7 symbols, in the same order. <code>node web/check.js</code> in the repository re-runs that comparison.</p>
+    <h2>limits</h2>
     <p>It shows the core's semiogenesis path running outside the Rust toolchain, on a stream, with its events legible as they form. It is not the on-target hardware validation the README lists as pending; a browser is not a Cortex-M4F. Symbols here are shown as the channel pair and coherence the event carries; naming them with a vocabulary is the job of the layers above the core, which this page does not load.</p>
     <p class="meta">apache-2.0 / <a href="https://github.com/bamicallef35-netizen/umwelt-engine/tree/main/web">the wrapper crate</a> / <a href="https://github.com/bamicallef35-netizen/umwelt-engine">README</a></p>
   </section>
