@@ -1,0 +1,38 @@
+[package]
+name         = "umwelt-pyo3"
+version      = { workspace = true }
+edition      = { workspace = true }
+rust-version = { workspace = true }
+authors      = { workspace = true }
+license      = { workspace = true }
+repository   = { workspace = true }
+homepage     = { workspace = true }
+readme       = "README.md"
+description  = "PyO3 bindings for the Umwelt Engine (ADR-0002, P7.1). std-only."
+documentation = "https://docs.rs/umwelt-pyo3"
+keywords     = ["semiotics", "python", "pyo3", "bindings", "umwelt"]
+categories   = ["api-bindings"]
+
+# Two crate types:
+# - `cdylib` is what Python loads as `umwelt.so`/`umwelt.pyd` when
+#   maturin (P7.2) builds the extension module.
+# - `rlib` lets us `cargo test -p umwelt-pyo3` and link the crate from
+#   other Rust code (useful for P7.2 smoke tests).
+[lib]
+name       = "umwelt"
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+# Pull in the std (default) build of umwelt-core — PyO3 is std-only by
+# construction, so the no_std invariants on umwelt-core/umwelt-sep are
+# preserved by never depending on them from a `no_std` target.
+umwelt-core = { path = "../umwelt-core" }
+pyo3        = { workspace = true }
+
+[features]
+default = []
+# Toggle on when building the actual Python extension via maturin
+# (P7.2). Off by default so `cargo check --workspace` does not try to
+# link libpython; `cargo test -p umwelt-pyo3` likewise works without
+# extension-module on every developer machine.
+extension-module = ["pyo3/extension-module"]

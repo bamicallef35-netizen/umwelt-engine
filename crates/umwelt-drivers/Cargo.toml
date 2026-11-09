@@ -1,0 +1,27 @@
+[package]
+name        = "umwelt-drivers"
+version     = { workspace = true }
+edition     = { workspace = true }
+rust-version = { workspace = true }
+authors     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+homepage    = { workspace = true }
+readme      = { workspace = true }
+description = "Sensor drivers — IMU, camera, GPS — abstracted behind traits. no_std."
+documentation = "https://docs.rs/umwelt-drivers"
+keywords    = ["semiotics", "sensor", "imu", "embedded", "drivers"]
+categories  = ["embedded", "hardware-support"]
+
+[features]
+default = ["std", "mock"]
+std     = ["umwelt-core/std"]
+mock    = []
+
+[dependencies]
+umwelt-core = { path = "../umwelt-core", default-features = false }
+heapless    = { workspace = true }
+libm        = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }

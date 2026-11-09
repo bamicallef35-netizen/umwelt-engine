@@ -1,0 +1,27 @@
+[package]
+name         = "hyde-park-replay"
+version      = { workspace = true }
+edition      = { workspace = true }
+rust-version = { workspace = true }
+authors      = { workspace = true }
+license      = { workspace = true }
+# Intentionally NOT published. This crate is an example, not a library.
+# No `description`, `keywords`, or `categories` — crates.io never sees it.
+publish      = false
+# `cargo run -p hyde-park-replay` resolves to the replay binary; the
+# `gen-trace` sibling binary has to be called out explicitly.
+default-run  = "hyde-park-replay"
+
+[[bin]]
+name = "hyde-park-replay"
+path = "src/main.rs"
+
+[[bin]]
+name = "gen-trace"
+path = "src/bin/gen_trace.rs"
+
+[dependencies]
+umwelt-core  = { path = "../../crates/umwelt-core", features = ["serde"] }
+umwelt-vocab = { path = "../../crates/umwelt-vocab" }
+serde        = { workspace = true }
+serde_json   = { workspace = true }

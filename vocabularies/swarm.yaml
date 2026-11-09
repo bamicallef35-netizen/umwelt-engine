@@ -1,0 +1,83 @@
+# Swarm vocabulary — CCI / SwarmNet
+#
+# Cooperative Cognitive Interface for swarm coordination agents.
+# Maps sign_type (u8) slots to symbolic names for swarm behaviour,
+# formation, and inter-agent signalling. Composite rules describe
+# emergent swarm states derived from co-occurring agent signs.
+
+name: swarm
+description: Cooperative Cognitive Interface for SwarmNet agents
+
+types:
+  # ── Agent state signs (0–15) ───────────────────────────────────────
+  0: idle
+  1: moving
+  2: stopped
+  3: turning
+  4: accelerating
+  5: decelerating
+  6: hovering
+  7: landed
+
+  # ── Perception signs (16–31) ───────────────────────────────────────
+  16: obstacle_near
+  17: obstacle_far
+  18: peer_detected
+  19: peer_lost
+  20: target_acquired
+  21: target_lost
+  22: boundary_reached
+  23: signal_weak
+
+  # ── Formation signs (32–47) ────────────────────────────────────────
+  32: formation_line
+  33: formation_grid
+  34: formation_circle
+  35: formation_wedge
+  36: formation_scatter
+
+  # ── Intent signs (48–63) ───────────────────────────────────────────
+  48: request_join
+  49: request_leave
+  50: request_help
+  51: acknowledge
+  52: yield_priority
+  53: claim_sector
+
+  # ── Composite signs (200–215) ──────────────────────────────────────
+  200: convergence
+  201: dispersal
+  202: avoidance_manoeuvre
+  203: patrol_sweep
+  204: rally_point
+
+composite_rules:
+  - sign_type: 200
+    name: convergence
+    requires:
+      - peer_detected
+      - moving
+
+  - sign_type: 201
+    name: dispersal
+    requires:
+      - peer_detected
+      - boundary_reached
+
+  - sign_type: 202
+    name: avoidance_manoeuvre
+    requires:
+      - obstacle_near
+      - turning
+
+  - sign_type: 203
+    name: patrol_sweep
+    requires:
+      - formation_line
+      - moving
+
+  - sign_type: 204
+    name: rally_point
+    requires:
+      - target_acquired
+      - request_join

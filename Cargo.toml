@@ -1,0 +1,67 @@
+[workspace]
+resolver = "2"
+# The WebAssembly wrapper for the live page is its own workspace (see web/Cargo.toml).
+exclude = ["web"]
+members = [
+    "crates/umwelt-core",
+    "crates/umwelt-sep",
+    "crates/umwelt-drivers",
+    "crates/umwelt-transport",
+    "crates/umwelt-vocab",
+    "crates/umwelt-cli",
+    "crates/umwelt-pyo3",
+    # P9.5: Python-free ECI replay example. Not published; not on
+    # crates.io. `cargo run -p hyde-park-replay` drives the full
+    # pipeline + SEP path end-to-end from a checked-in NDJSON trace.
+    "examples/hyde_park",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+authors = ["Ben Micallef"]
+license = "Apache-2.0"
+repository = "https://github.com/bamicallef35-netizen/umwelt-engine"
+homepage = "https://github.com/bamicallef35-netizen/umwelt-engine"
+readme = "README.md"
+
+[workspace.dependencies]
+# Core — no_std compatible
+heapless    = { version = "0.8", default-features = false }
+bitflags    = { version = "2.6", default-features = false }
+libm        = { version = "0.2", default-features = false }
+
+# Host-only
+clap        = { version = "4", features = ["derive"] }
+serde       = { version = "1", features = ["derive"] }
+# serde_yaml 0.9 archived by dtolnay in 2024 (RUSTSEC-ADV tracked as
+# unmaintained). serde_yaml_ng is the active maintained fork with a
+# compatible API.
+serde_yaml_ng = "0.10"
+serde_json  = "1"
+thiserror   = "1"
+tokio       = { version = "1", features = ["full"] }
+bytes       = "1"
+rand        = "0.8"
+tracing     = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Testing
+proptest    = "1"
+criterion   = { version = "0.5", features = ["html_reports"] }
+
+# Python bindings (ADR-0002, P7). abi3-py38 keeps the ABI stable across
+# Python releases; extension-module is opted in per-crate so `cargo check`
+# on the workspace does not try to link to libpython.
+pyo3        = { version = "0.22", features = ["abi3-py38"] }
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true

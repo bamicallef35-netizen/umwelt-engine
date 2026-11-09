@@ -1,0 +1,78 @@
+# Terrain vocabulary — ECI / GroundKeeper
+#
+# Environmental Cognitive Interface for ground-based monitoring agents.
+# Maps sign_type (u8) slots to symbolic names for terrain and
+# environmental phenomena. Composite rules describe higher-order
+# conditions derived from co-occurring lower-order signs.
+
+name: terrain
+description: Environmental Cognitive Interface for GroundKeeper agents
+
+types:
+  # ── Base environmental signs (0–31) ────────────────────────────────
+  0: idle
+  1: moisture_low
+  2: moisture_nominal
+  3: moisture_high
+  4: temperature_rise
+  5: temperature_drop
+  6: temperature_nominal
+  7: light_high
+  8: light_low
+  9: wind_gust
+  10: wind_sustained
+  11: vibration_transient
+  12: vibration_sustained
+  13: pressure_rise
+  14: pressure_drop
+  15: humidity_high
+  16: humidity_low
+
+  # ── Terrain-specific signs (32–63) ─────────────────────────────────
+  32: slope_detected
+  33: obstacle_fixed
+  34: obstacle_moving
+  35: water_body
+  36: vegetation_dense
+  37: vegetation_sparse
+  38: soil_compact
+  39: soil_loose
+
+  # ── Composite signs (200–215) ──────────────────────────────────────
+  200: drought_warning
+  201: flood_risk
+  202: frost_risk
+  203: erosion_risk
+  204: fire_risk
+
+composite_rules:
+  - sign_type: 200
+    name: drought_warning
+    requires:
+      - moisture_low
+      - temperature_rise
+
+  - sign_type: 201
+    name: flood_risk
+    requires:
+      - moisture_high
+      - pressure_drop
+
+  - sign_type: 202
+    name: frost_risk
+    requires:
+      - temperature_drop
+      - humidity_high
+
+  - sign_type: 203
+    name: erosion_risk
+    requires:
+      - wind_sustained
+      - soil_loose
+
+  - sign_type: 204
+    name: fire_risk
+    requires:
+      - moisture_low
+      - temperature_rise
+      - wind_gust

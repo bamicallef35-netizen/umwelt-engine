@@ -1,0 +1,33 @@
+# umwelt-web — the no_std core compiled to WebAssembly for the live page.
+#
+# Deliberately outside the main workspace (its own `[workspace]` table
+# below) so the host test suite and the Cortex-M gate never see a cdylib
+# with a panic handler. Build with:
+#
+#   cargo build --manifest-path web/Cargo.toml --target wasm32-unknown-unknown --release
+#
+# and copy target/wasm32-unknown-unknown/release/umwelt_web.wasm to
+# docs/umwelt.wasm. No wasm-bindgen, no JavaScript glue generator: the
+# page calls four C-ABI exports and reads one flat buffer.
+[package]
+name = "umwelt-web"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "Apache-2.0"
+description = "The Umwelt Engine core, unchanged, as a WebAssembly module for the live page."
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+umwelt-core = { path = "../crates/umwelt-core", default-features = false }
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[workspace]

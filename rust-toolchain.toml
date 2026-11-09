@@ -1,0 +1,15 @@
+[toolchain]
+# Pinned to an exact version so every CI run and contributor machine
+# compiles against the same compiler. Bumps are deliberate and land in
+# their own commit (ADR-0006).
+channel = "1.95.0"
+components = ["rustfmt", "clippy"]
+# `thumbv7em-none-eabihf` is the P8.1 hardware-profile gate — ARM
+# Cortex-M4F with hardware float, the class of microcontroller the
+# Umwelt Engine targets (ESP32-S3 uses the Xtensa-LX7 variant but the
+# thumb target is close enough to catch no_std regressions that
+# Xtensa would also surface). Installing it via the toolchain file
+# means `rustup` adds it automatically on `cargo` invocations so
+# `verify.sh` can exercise the gate without extra setup.
+targets = ["thumbv7em-none-eabihf"]
+profile = "minimal"

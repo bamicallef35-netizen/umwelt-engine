@@ -1,0 +1,19 @@
+# Minimum-viable single-agent Umwelt Engine config.
+#
+# Used by the `config::tests::from_file_reads_example_config` round-trip
+# test and by hand invocations of `umwelt run` during development
+# (once P5.1 lands).
+#
+# Every field not set here falls back to the built-in default:
+#   pipeline.channels    = 4         (ADR-0013)
+#   pipeline.icon_window = 64
+#   pipeline.icon_bins   = 8
+#   runtime.tick_hz      = 10
+#   runtime.duration_s   = 30
+
+agent:
+  id: 1
+  vocabulary: vocabularies/swarm.yaml
+
+transport:
+  kind: loopback
